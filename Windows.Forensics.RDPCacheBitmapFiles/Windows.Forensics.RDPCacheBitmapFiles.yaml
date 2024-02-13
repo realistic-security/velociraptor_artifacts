@@ -3,7 +3,7 @@ name: Windows.Forensics.RDPCachBitmapFiles
 author: mhammed.seddaoui@realistic-security.com
 
 description: |
-   This is a customized plugin to extract bitmap files from RDP cache files
+   This is a customized artifact to extract bitmap files from RDP cache files
 
 # Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
 type: CLIENT
