@@ -1,0 +1,77 @@
+name: Windows.Forensics.RDPCacheServerSide
+author: mhammed.seddaoui@realistic-security.com
+description: |
+   This is Artifact to execute velociraptor server side
+
+# Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
+type: SERVER
+
+parameters:
+   - name: client_id
+     default: "NotFound"
+
+sources:
+  - precondition:
+      SELECT OS From info() where OS = 'windows'
+    
+    query: |
+     --Windows.Forensics.RDPCache
+     LET collection <= collect_client(
+         client_id=client_id,
+         artifacts='Windows.Forensics.RDPCachBitmapFiles',
+         env=dict())
+     LET _ <= SELECT *
+       FROM watch_monitoring(artifact='System.Flow.Completion')
+       WHERE FlowId = collection.flow_id
+       LIMIT 1 
+     LET Paths <= SELECT HostName,
+                         file_store(
+                           path="clients/" + collection.request.client_id + "/collections/" + collection.flow_id + "/uploads/auto/" + str(
+                             str=UploadFiles.StoredName)) AS UploadFiles
+       FROM source(client_id=collection.request.client_id,
+                   flow_id=collection.flow_id,
+                   artifact='Windows.Forensics.RDPCachBitmapFiles')
+       WHERE Complete != true
+     LET _ <= SELECT *
+       FROM foreach(
+         row={
+           SELECT HostName,
+                  UploadFiles
+           FROM Paths
+         },
+         query={
+           SELECT *
+           FROM unzip(
+             filename=UploadFiles,
+             output_directory="../../../../../../../../../../../../../../../home/rs/puzzle/uploads/" + collection.flow_id + "/" + collection.request.client_id + "/" + split(
+               string=str(
+                 str=path_split(
+                   path=UploadFiles)[-1]),
+               sep_string=".zip")[0] + "/caches")
+         })
+     LET imagesPath <= SELECT *
+       FROM foreach(
+         row={
+           SELECT 
+                  HostName,
+                  UploadFiles
+           FROM Paths
+         },
+         query={
+           SELECT HostName,
+                  str(
+                    str="http://172.16.40.2:8082/" + collection.flow_id + "/" + collection.request.client_id + "/" + split(
+                      string=str(
+                        str=path_split(
+                          path=UploadFiles)[-1]),
+                      sep_string=".zip")[0] + "/edit") AS CachesUrl,
+                  str(
+                    str="http://172.16.40.2:8082/" + collection.flow_id + "/" + collection.request.client_id + "/" + split(
+                      string=str(
+                        str=path_split(
+                          path=UploadFiles)[-1]),
+                      sep_string=".zip")[0] + "/preview") AS ScreenshotsUrl
+           FROM scope()
+         })
+     SELECT *
+     FROM imagesPath

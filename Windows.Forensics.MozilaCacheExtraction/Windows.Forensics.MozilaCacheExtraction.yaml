@@ -1,0 +1,45 @@
+name: Windows.Forensics.MozilaCacheExtraction
+author: abderrahim.tasfaout@realistic-security.com
+description: |
+    This artificat will extract mozila browser Cache from windows  cache files.
+    
+    The extraction is in client side.
+
+
+type: CLIENT
+
+tools:
+   - name: mozila_cahe_view_Link
+     url: https://www.nirsoft.net/utils/mzcacheview.zip
+     serve_locally: true
+     
+parameters:
+   - name: MozilaCacheGlob
+     default:  C:\Users\*\AppData\Local\Mozilla\Firefox\Profiles\*\cache2
+
+required_permissions:
+  - EXECVE
+
+sources:
+  - precondition:
+      SELECT OS From info() where OS = 'windows'
+    query: |
+        LET mozilacacheviewer_zip <= SELECT * FROM Artifact.Generic.Utils.FetchBinary(ToolName="mozila_cahe_view_Link", IsExecutable=FALSE)
+        LET cacheviewer_folder <= tempdir(remove_last=True)
+        LET mozilacacheviewer_exe <= SELECT NewPath FROM unzip(filename=mozilacacheviewer_zip.FullPath[0],output_directory=cacheviewer_folder)
+        LET csv_tmp <= tempfile(remove_last=TRUE)
+        
+        SELECT * from foreach(
+        row={
+            SELECT OSPath,path_split(path=str(str=OSPath))[2] as username FROM glob(globs=MozilaCacheGlob)
+        },
+        query={
+            -- extract `browser` caches for each user
+            SELECT * from foreach(
+            row={
+                SELECT _ FROM execve(argv=["cmd.exe","/c",mozilacacheviewer_exe.NewPath[0],'-Folder',str(str=OSPath), '/scomma',csv_tmp])},
+            query={
+                SELECT username,* FROM parse_csv(filename=csv_tmp)}
+            )
+        }
+        )

@@ -1,0 +1,73 @@
+name: Server.Enrichment.Known_Good_Sync_to_Elastic
+author: Mohamed Amine GUELMAOUI
+description: |
+   This a server event artifact is used to synchronise with Elastic Database and to add new hash on each execution of Client.Enrichment.Known_Good_Hash Artifact
+
+# Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT
+type: SERVER_EVENT
+
+parameters:
+  - name: ArtifactNameRegex
+    default: ^Server.Enrichment.Known_Good_Hash$
+    type: regex
+    description: Only upload these artifacts to elastic
+  - name: elasticAddresses
+    default: http://192.168.188.128:9200/
+  - name: Username
+    default: elastic
+  - name: Password
+    default: elastpass
+  - name: APIKey
+  - name: DisableSSLSecurity
+    type: bool
+    default: TRUE
+    description: Disable SSL certificate verification
+  - name: Threads
+    type: int
+    description: Number of threads to upload with
+  - name: ChunkSize
+    type: int
+    description: Batch this many rows for each upload.
+  - name: CloudID
+    description: The cloud id if needed
+  - name: RootCA
+    description: |
+      A root CA certificate in PEM for trusting TLS protected Elastic
+      servers.
+
+sources:
+  - query: |
+      LET completions = SELECT * FROM watch_monitoring(
+             artifact="System.Flow.Completion")
+             WHERE Flow.artifacts_with_results =~ ArtifactNameRegex
+
+      LET documents = SELECT * FROM foreach(row=completions,
+          query={
+             SELECT * FROM foreach(
+                 row=Flow.artifacts_with_results,
+                 query={
+                     SELECT source, SHA256, hashtrust 
+                     FROM source(
+                        client_id=ClientId,
+                        flow_id=Flow.session_id,
+                        artifact=_value)
+                     WHERE NOT hashtrust = "suspicious" 
+                     AND NOT hashtrust = "malicious" 
+                     AND NOT source = "RS_DB"
+                     AND NOT split(string=hashtrust, sep="/")[0] != "0" 
+                 })
+          })
+          
+      SELECT * FROM elastic_upload(
+            query=documents,
+            threads=Threads,
+            chunk_size=ChunkSize,
+            addresses=split(string=elasticAddresses, sep=","),
+            index="known-good-hash",
+            password=Password,
+            username=Username,
+            cloud_id=CloudID,
+            api_key=APIKey,
+            root_ca=RootCA,
+            disable_ssl_security=DisableSSLSecurity,
+            type="artifact")

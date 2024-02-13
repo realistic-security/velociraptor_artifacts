@@ -1,0 +1,101 @@
+name: Windows.Forensic.Browser.Keyboard_Typing
+description: |
+  As an incident responder I should be able to detect browser keyboard typing with Velociraptor.
+  
+  Browser included: Chrome, Opera, Edge, Brave, Firefox
+
+  NOTE: Some research has shown that older browsers may not have this
+  table, then you should be treating it as you would in a traditional
+  investigation, this changes is aimed at taking advantage of the
+  newer tables to reduce false postitives.
+
+
+
+author: GUELMAOUI Mohamed Amine @ Realistic Security
+type: CLIENT
+parameters:
+  - name: placesGlobs
+    default: \AppData\Roaming\Mozilla\Firefox\Profiles\*\places.sqlite
+  - name: urlSQLQuery1
+    default: |
+      SELECT last_visit_date,
+             visit_count,
+             title,
+             url as url_visited 
+      FROM moz_places 
+      WHERE title IS NOT NULL
+  - name: userRegex
+    default: .
+    type: regex
+  - name: URLRegex
+    default: .
+    type: regex
+  - name: historyGlobs
+    default: \AppData\{Local,Roaming}\{Google\Chrome\User Data,Microsoft\Edge\User Data,BraveSoftware\Brave-Browser\User Data,Vivaldi\User Data,Opera Software\Opera*Stable}\*\History
+  - name: urlSQLQuery
+    default: |
+      SELECT K.term AS term,
+             U.url AS visited_url,
+             U.visit_count AS visit_count,
+             U.last_visit_time AS last_visit_time
+      FROM keyword_search_terms AS K
+      JOIN urls AS U ON K.url_id = U.id
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+sources:
+  - query: |
+        -- Chrome, Opera, Edge, Brave Part
+        LET history_files = SELECT * from foreach(
+          row={
+             SELECT Uid, Name AS User,
+                    expand(path=Directory) AS HomeDirectory
+             FROM Artifact.Windows.Sys.AllUsers()
+          },
+          query={
+             SELECT User, OSPath, Mtime
+             FROM glob(globs=historyGlobs, root=HomeDirectory)
+          })
+        
+        -- Firefox Part
+        LET places_files = SELECT * from foreach(
+          row={
+             SELECT Uid, Name AS User,
+                    expand(path=Directory) AS HomeDirectory
+             FROM Artifact.Windows.Sys.AllUsers()
+             WHERE Name =~ userRegex
+          },
+          query={
+             SELECT User, OSPath, Mtime
+             FROM glob(root=HomeDirectory, globs=placesGlobs)
+          })
+
+        -- Chain between them (results) in the same result table
+        SELECT * FROM chain(
+        a={ SELECT * FROM 
+        foreach(row=history_files,
+          query={
+            SELECT User,
+                   term AS searched_term,
+                   visit_count,
+                   visited_url,
+                   timestamp(winfiletime=last_visit_time * 10) AS last_visit_time,
+                   OSPath
+            FROM sqlite(
+              file=OSPath,
+              query=urlSQLQuery)
+          })},
+        b={ SELECT * FROM 
+        foreach(row=places_files,
+          query={
+            SELECT User,
+                   title AS searched_term,
+                   visit_count,
+                   url_visited AS visited_url,
+                   timestamp(epoch=last_visit_date/1000000) as last_visit_time,
+                   OSPath
+            FROM sqlite(
+              file=OSPath,
+              query=urlSQLQuery1)
+          })
+        },async=TRUE)

@@ -1,0 +1,69 @@
+name: Windows.Forensics.ThumbCacheImageExtraction
+author: abderrahim.tasfaout@realistic-security.com
+description: |
+    This artificat will extract Cached images from windows thumbache files.
+    
+    The extraction is in client side.
+    
+    The resutl will be multiple zip files for each user for each client.
+
+    
+
+type: CLIENT
+
+tools:
+   - name: thumbcacheviewer_Link
+     url: https://github.com/thumbcacheviewer/thumbcacheviewer/releases/download/v1.0.2.1/thumbcache_viewer_cmd_64.zip
+     serve_locally: true
+     
+parameters:
+   - name: ThumbCacheGlob
+     default: C:\Users\*\AppData\Local\Microsoft\Windows\Explorer\thumbcache_*.db
+   - name: Accessor
+     description: Set accessor to use. blank is default, file for api, ntfs for raw, ntfs_vss for vss
+
+required_permissions:
+  - EXECVE
+
+sources:
+  - precondition:
+      SELECT OS From info() where OS = 'windows'
+    query: |
+        LET thumbcacheviewer_zip <= SELECT * FROM Artifact.Generic.Utils.FetchBinary(ToolName="thumbcacheviewer_Link", IsExecutable=FALSE)
+        LET thumbcacheviewer_folder <= tempdir(remove_last=True)
+        LET thumbcacheviewer_exe <= SELECT NewPath FROM unzip(filename=thumbcacheviewer_zip.FullPath[0],output_directory=thumbcacheviewer_folder)
+        LET ImagesTempDir <= tempdir(remove_last=True)
+        
+        SELECT * from foreach(
+        -- extract existing users 
+        row={
+            SELECT path_split(path=str(str=OSPath))[2] as username FROM glob(globs=ThumbCacheGlob,accessor=Accessor) WHERE Size > 0 GROUP BY username
+        },
+        query={
+            SELECT * FROM chain(
+            -- extract thumcaches for each user on ImagesTempDir
+            a={
+                SELECT * FROM foreach(
+                    row={
+                        SELECT OSPath FROM glob(globs=ThumbCacheGlob,accessor=Accessor) WHERE Size > 0 and OSPath=~username
+                    },
+                    query={
+                    -- after upload clean the Images temporary directory
+                        SELECT * FROM execve(argv=["cmd.exe","/c",thumbcacheviewer_exe.NewPath[0],"-t",OSPath,"-o",ImagesTempDir])
+                    }
+                )
+            },
+            b={
+                SELECT rm(filename=ImagesTempDir+"\\"+System_ThumbnailCacheId+"*.bmp") 
+                FROM Artifact.RS.Windows.SystemIndex_PropertyStore()
+            },
+            c={
+                SELECT upload(file=ImagesTempDir+"\\"+username+".zip") FROM execve(argv=["powershell.exe","-c","Compress-Archive","-Path",ImagesTempDir,"-DestinationPath",ImagesTempDir+"\\"+username,"-CompressionLevel","Fastest"])
+            },
+            then={
+                SELECT * FROM execve(argv=["powershell.exe","-c","rm",ImagesTempDir+"\\*"])
+            }
+            
+        )
+        }
+        )

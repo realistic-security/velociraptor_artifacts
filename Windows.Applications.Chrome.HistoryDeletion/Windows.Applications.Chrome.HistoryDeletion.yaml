@@ -1,0 +1,137 @@
+name: Windows.Applications.Chrome.HistoryDeletionCounter
+description: |
+  Enumerates a targets Browser history.
+
+
+author: abderrahim.tasfaout@realistic-security.com
+parameters:
+  - name: historyGlobs
+    default: \AppData\{Local,Roaming}\{Google\Chrome\User Data,Microsoft\Edge\User Data,BraveSoftware\Brave-Browser\User Data,Vivaldi\User Data,Opera Software\Opera*Stable}\*\History
+  - name: urlSQLQuery
+    default: |
+      SELECT U.id AS id,
+             V.id AS vid,
+             V.id - LAG(V.id) OVER (ORDER BY V.ID) AS LagdiffV,
+             0 - V.id + LEAD(V.id) OVER (ORDER BY V.ID) AS LeaddiffV,
+             U.url AS url,
+             V.visit_time as visit_time,
+             U.title AS title,
+             U.visit_count,
+             U.typed_count,
+             U.last_visit_time, U.hidden,
+             CASE VS.source
+                WHEN 0 THEN 'Synced'
+                WHEN 1 THEN 'Local'
+                WHEN 2 THEN 'Extension'
+                WHEN 3 THEN 'ImportFromFirefox'
+                WHEN 4 THEN 'ImportFromSafari'
+                WHEN 6 THEN 'ImportFromChrome/Edge'
+                WHEN 7 THEN 'ImportFromEdgeHTML'
+                ELSE 'Local'
+             END Source,
+             V.from_visit,
+             strftime('%H:%M:%f',V.visit_duration/1000000.0, 'unixepoch') as visit_duration,
+             V.transition
+      FROM urls AS U
+      JOIN visits AS V ON U.id = V.url
+      LEFT JOIN visit_source AS VS on V.id = VS.id
+  - name: userRegex
+    default: .
+    type: regex
+  - name: URLRegex
+    default: .
+    type: regex
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+sources:
+  - query: |
+        LET history_files = SELECT * from foreach(
+          row={
+             SELECT Uid, Name AS User,
+                    expand(path=Directory) AS HomeDirectory
+             FROM Artifact.Windows.Sys.Users()
+             WHERE Name =~ userRegex
+          },
+          query={
+             SELECT User, OSPath, Mtime
+             FROM glob(globs=historyGlobs, root=HomeDirectory)
+          })
+        LET history_data <= SELECT * FROM foreach(row=history_files,
+          query={
+            SELECT User,
+                   id AS url_id,
+                   vid AS visit_id,
+                   {SELECT * FROM if(
+                                    condition=LagdiffV != NULL,
+                                        then={SELECT LagdiffV - 1 from scope()},
+                                    else={SELECT vid - 1 from scope()}
+                    )} AS NumberOfDeletionsBefore,
+                    {SELECT * FROM if(
+                                    condition=LeaddiffV != NULL,
+                                        then={SELECT LeaddiffV - 1 from scope()},
+                                    else={SELECT 0 from scope()}
+                    )} AS NumberOfDeletionsAfter,
+                    false AS DELETED,
+                   timestamp(winfiletime=visit_time * 10) AS visit_time,
+                   url as visited_url,
+                   title,visit_count,typed_count,
+                   timestamp(winfiletime=last_visit_time * 10) AS last_visit_time,
+                   hidden,
+                   from_visit AS from_url_id,
+                   Source,
+                   visit_duration,transition,
+                   timestamp(winfiletime=last_visit_time * 10) as _SourceLastModificationTimestamp,
+                   OSPath
+            FROM sqlite(
+              file=OSPath,
+              query=urlSQLQuery)
+          })
+          WHERE visited_url =~ URLRegex AND (NumberOfDeletionsBefore != 0 OR NumberOfDeletionsAfter != 0)
+          GROUP BY visit_id
+          ORDER BY visit_id
+          LET deleted_data <= SELECT * from foreach(
+            row={SELECT * from history_data},
+            query={
+            SELECT User,
+                   NULL AS url_id,
+                   NULL AS visit_time,
+                   NULL AS visited_url,
+                   NULL AS title,
+                   NULL AS visit_count,
+                   NULL AS typed_count,
+                   NULL AS last_visit_time,
+                   NULL AS hidden,
+                   NULL AS from_url_id,
+                   NULL AS Source,
+                   NULL AS visit_duration,
+                   NULL AS transition,
+                   NULL AS _SourceLastModificationTimestamp,
+                   NULL AS OSPath,
+                   {SELECT * FROM if(
+                                    condition=NumberOfDeletionsBefore != 0,
+                                        then={SELECT NumberOfDeletionsBefore from scope()},
+                                    else={SELECT NumberOfDeletionsAfter from scope()}
+                    )} AS NumberOfDeletions,
+                   true AS DELETED,
+                   visit_id - 1 AS visit_id FROM scope()}
+          )
+        SELECT *,User + str(str=visit_id) AS order_column FROM chain(
+        a={SELECT User,
+                   url_id,
+                   visit_id,
+                   visit_time,
+                   visited_url,
+                   title,
+                   visit_count,typed_count,
+                   last_visit_time,
+                   hidden,
+                   from_url_id,
+                   Source,
+                   visit_duration,transition,
+                   _SourceLastModificationTimestamp,
+                   OSPath FROM history_data
+        },
+        b={SELECT * FROM deleted_data
+        })
+        ORDER BY order_column

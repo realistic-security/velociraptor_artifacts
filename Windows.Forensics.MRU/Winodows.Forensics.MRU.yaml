@@ -1,0 +1,94 @@
+name: Windows.Forensics.MRU
+author: mhammed.seddaoui@realistic-security.com
+
+description: |
+
+    This artifact involves using RECmd from Eric Zimmerman's Tools to analyze User Configuration and Activity
+    particularly the Most Recently Used (MRU) items. Specifically, we extract information from 
+    the LastVisitedPidlMRU__NTUSER.DAT.csv and OpenSavePidlMRU__NTUSER.DAT.csv output files.
+    
+# Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
+type: CLIENT
+
+required_permissions:
+  - EXECVE
+  
+tools:
+   - name: RECmd
+     url: https://f001.backblazeb2.com/file/EricZimmermanTools/RECmd.zip
+     serve_locally: true
+     
+parameters:
+   - name: FilePath
+     default: C:\Users\*\NTUSER.DAT
+
+sources:
+  - precondition:
+      SELECT OS From info() WHERE OS = 'windows'
+
+    query: |
+     LET X = scope()
+     -- Retrieve the tool; if it does not exist; download and install it.
+     LET REcmd_zip <= SELECT *
+       FROM Artifact.Generic.Utils.FetchBinary(ToolName="RECmd", IsExecutable=False)
+     -- Temporary directory will be removed upon completion of the artifact.
+     LET REcmdTemdir <= tempdir(
+         remove_last=true)
+     LET REcmd_exe <= SELECT 
+                             NewPath
+       FROM unzip(filename=REcmd_zip.FullPath[0],
+                  output_directory=REcmdTemdir)
+     -- Temporary directory used to store the output of RECmd.
+     LET results <= tempdir(
+         remove_last=true)
+    
+     -- Retrieve information about the executable, absolute path, and timestamp of the binary that ran the opened file.  
+     SELECT 
+            X.Executable AS Executable,
+            X.AbsolutePath AS AbsolutePath,
+            X.OpenedOn AS OpenedOn,
+            X.Details As Details
+     FROM foreach(
+       row={
+       -- list all NTUSER.DAT files corresponding to each user on the client
+         SELECT 
+                OSPath
+         FROM glob(globs=FilePath,
+                   accessor="auto")
+       },
+       query={
+       -- Execute queries sequentially for each user and extract CSV files containing their activities and configurations.
+         SELECT *
+         FROM chain(
+           a={
+             SELECT 
+                    log(
+                      message="done") AS AbsolutePath -- this trick to ignore stdout output from final table
+             FROM execve(
+               argv=["cmd.exe", "/c", REcmd_exe.NewPath[34], "--bn", REcmd_exe.NewPath[21], "-f", OSPath, "--csv", results])
+           },
+           b={
+           /*
+                After extracting all CSV files, filter and read only the 'LastVisitedPidlMRU__NTUSER.DAT.csv'
+                and 'OpenSavePidlMRU__NTUSER.DAT.csv' files. Specifically, include only entries where 
+                the OSPath contains the suffix 'PidlMRU__NTUSER.DAT.csv'.
+           */
+             SELECT *
+             FROM foreach(
+               row={
+                 SELECT 
+                        OSPath
+                 FROM glob(globs=results + "\\*\\*.csv",
+                           accessor="auto")
+                 WHERE OSPath =~ "PidlMRU__NTUSER.DAT.csv"
+               },
+               query={
+               -- read csv files
+                 SELECT *
+                 FROM parse_csv(filename=OSPath,
+                                accessor="auto")
+               })
+           })
+         -- If the log function from the execve query returns true, we exclude it from the selection. 
+         WHERE AbsolutePath != true 
+       })

@@ -1,0 +1,90 @@
+name: Windows.Forensics.RDPCachBitmapFiles
+
+author: mhammed.seddaoui@realistic-security.com
+
+description: |
+   This is a customized plugin to extract bitmap files from RDP cache files
+
+# Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
+type: CLIENT
+
+tools:
+   - name: bmctools
+     url: https://github.com/0xhunter213/bmcexe/raw/main/bmctools.exe
+     serve_locally: true
+     
+parameters:
+   - name: RDPCacheGlob
+     default: C:\{{Users,Windows.old\Users}\*\AppData\Local,Documents and Settings\*\Local Settings\Application Data}\Microsoft\Terminal Server Client\Cache\*.bin
+   - name: Accessor
+     description: Set accessor to use. blank is default, file for api, ntfs for raw, ntfs_vss for vss
+     
+sources:
+  - precondition:
+        SELECT OS From info() where OS = 'windows'
+        
+    query: |
+     -- Check if bmc-tools is in the cache; if not, download it from the bmctools URL.
+     LET hostname <= SELECT Hostname FROM info()
+     LET bmcexe <= SELECT *
+       FROM Artifact.Generic.Utils.FetchBinary(ToolName="bmctools",
+                                               IsExecutable=FALSE)
+     -- Create Temporary Folder
+     LET TempDir <= tempdir(
+         remove_last=True)
+     SELECT *
+     FROM foreach(
+       -- Retrieve usernames on the client with cached bin files.  
+       row={
+         SELECT 
+                path_split(
+                  path=str(
+                    str=OSPath))[2] AS username
+         FROM glob(globs=RDPCacheGlob,
+                   accessor=Accessor)
+         WHERE Size > 0
+         GROUP BY username
+       },
+       query={
+         SELECT *
+         FROM chain(
+           /*
+         Create a sequence of queries executed for each user:
+             1- Retrieve cache bin file paths and extract bitmap files using bmc-tools (exe version).
+             2- Compress TempDir and name it username.zip, then upload it.
+             3- Delete the content of TempDir to make it empty for the next username operation.
+         */
+           a={
+             SELECT *
+             FROM foreach(
+               row={
+                 -- Retrieve cache bins for the specified `username`
+                 SELECT 
+                        OSPath
+                 FROM glob(globs=RDPCacheGlob,
+                           accessor=Accessor)
+                 WHERE Size > 0
+                  and OSPath =~ username+"\\\\"
+               },
+               query={
+                 -- Extract bitmap files from the cache bin file and save the resulting files in the TempDir.
+                 SELECT *
+                 FROM execve(
+                   argv=["cmd.exe", "/c", bmcexe.FullPath[0], "-s", OSPath, "-d", TempDir])
+               })
+           },
+           b={
+             -- Compress the folder and upload it with the user's name.
+             SELECT hostname.Hostname[0] As HostName, 
+                    upload(
+                      file=TempDir + "\\" + username + ".zip",
+                      name=username + ".zip") AS UploadFiles
+             FROM execve(
+               argv=["powershell.exe", "-c", "Compress-Archive", "-Path", TempDir + "\\*", "-DestinationPath", "'"+TempDir + "\\" + username+".zip'", "-CompressionLevel", "Fastest"])
+           },
+           c={
+             -- Empty the TempDir to make it ready for the next set of files related to a different username.
+             SELECT *
+             FROM execve(argv=["powershell.exe", "-c", "rm", TempDir + "\\*"])
+           })
+       })

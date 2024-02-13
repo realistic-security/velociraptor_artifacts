@@ -1,0 +1,50 @@
+name: Client.Enrichment.ApiHashLookup
+author: Tasfaout Abderrahim
+description: |
+  Submit a hash to circl.lu. v0.1
+
+  This artifact can be called from within another artifact.
+  Ex.
+
+    `SELECT * from Artifact.Server.Enrichment.ApiHashLookup(Hash_value=$YOURHASH,Hash_type=$HASHTYPE)`
+
+type: CLIENT
+
+parameters:
+    - name: Hash_value
+      type: array
+      description: The hash to submit to the API (MD5, SHA1, SHA256).
+      default:
+
+    - name: Hash_type
+      type: string
+      description: The hash type (MD5, SHA1, SHA256).
+      default:
+
+    - name: UserAgent
+      type: string
+      description: Name of the user agent used for submitting hashes.
+      default: Velociraptor
+
+sources:
+  - query: |
+        // Get the right api url from hash_type
+        let API_URL <= if(
+                condition = Hash_type =~ "MD5",
+                then = "https://hashlookup.circl.lu/lookup/md5/",
+                else = if(
+                        condition = Hash_type =~ "SHA1",
+                        then = "https://hashlookup.circl.lu/lookup/sha1/",
+                        else = "https://hashlookup.circl.lu/lookup/sha256/"
+                        )
+                )
+                
+        // Query the API
+        LET Data = SELECT Response, parse_json(data=Content) as Content
+        FROM http_client(
+            url=API_URL+Hash_value,
+            headers=dict(`user-agent`=UserAgent,`Content-Type`="application/json"),
+            method="GET")
+        
+        // Select needed data
+        SELECT * from Data

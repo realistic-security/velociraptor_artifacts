@@ -1,0 +1,8 @@
+client_time,level,message
+1706179725," INFO","Starting query execution for Windows.Forensics.Clipboard.
+"
+1706179725,DEFAULT,Windows.Forensics.Clipboard: Time 0: Windows.Forensics.Clipboard: Sending response part 0 3.8 kB (7 rows).
+1706179725," INFO","Collection Windows.Forensics.Clipboard is done after 401.5326ms
+"
+1706179725,DEBUG,"Query Stats: {""RowsScanned"":24,""PluginsCalled"":6,""FunctionsCalled"":28,""ProtocolSearch"":74,""ScopeCopy"":56}
+"

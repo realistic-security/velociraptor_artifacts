@@ -1,0 +1,45 @@
+name: Windows.Forensics.BrowserCacheExtraction
+author: abderrahim.tasfaout@realistic-security.com
+description: |
+    This artificat will extract Chrome/Edge/Brave browsers Cache from windows  cache files.
+    
+    The extraction is in client side.
+
+
+type: CLIENT
+
+tools:
+   - name: chrome_cahe_view_Link
+     url: https://www.nirsoft.net/utils/chromecacheview.zip
+     serve_locally: true
+     
+parameters:
+   - name: BrowserCacheGlob
+     default: C:\Users\*\AppData\Local\{Google\Chrome,Microsoft\Edge,BraveSoftware\Brave-Browser,Vivaldi}\User Data\Default\Cache\Cache_Data
+
+required_permissions:
+  - EXECVE
+
+sources:
+  - precondition:
+      SELECT OS From info() where OS = 'windows'
+    query: |
+        LET chromecacheviewer_zip <= SELECT * FROM Artifact.Generic.Utils.FetchBinary(ToolName="chrome_cahe_view_Link", IsExecutable=FALSE)
+        LET cacheviewer_folder <= tempdir(remove_last=True)
+        LET chromecacheviewer_exe <= SELECT NewPath FROM unzip(filename=chromecacheviewer_zip.FullPath[0],output_directory=cacheviewer_folder)
+        LET csv_tmp <= tempfile(remove_last=TRUE)
+        
+        SELECT * from foreach(
+        row={
+            SELECT OSPath,path_split(path=str(str=OSPath))[2] as username,path_split(path=str(str=OSPath))[6] as browser FROM glob(globs=BrowserCacheGlob)
+        },
+        query={
+            -- extract `browser` caches for each user
+            SELECT * from foreach(
+            row={
+                SELECT _ FROM execve(argv=["cmd.exe","/c",chromecacheviewer_exe.NewPath[0],'-Folder',str(str=OSPath), '/scomma',csv_tmp])},
+            query={
+                SELECT username,browser,* FROM parse_csv(filename=csv_tmp)}
+            )
+        }
+        )

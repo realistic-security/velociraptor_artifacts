@@ -1,0 +1,28 @@
+name: Windows.Forensics.RDPCacheServerSide.All
+author: abdelghani.attatfa@realistic-security.com
+description: |
+   This is the human readable description of the artifact.
+
+# Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
+type: SERVER
+
+
+sources:
+  - precondition:
+      SELECT OS From info() where OS = 'windows' OR OS = 'linux' OR OS = 'darwin'
+
+    query: |
+      
+      SELECT * FROM foreach(
+        row={SELECT client_id FROM clients()},
+        query={
+            SELECT * FROM Artifact.Windows.Forensics.RDPCacheServerSide(client_id=client_id)
+        }
+      )
+      
+column_types:
+  - name: CachesUrl
+    type: url
+    
+  - name: ScreenshotsUrl
+    type: url

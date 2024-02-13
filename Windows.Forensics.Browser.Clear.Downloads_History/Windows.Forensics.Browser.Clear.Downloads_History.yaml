@@ -1,0 +1,37 @@
+name: Windows.Forensics.Browser.Clear.Downloads_History
+author: GUELMAOUI Mohamed Amine @ RealisticSecurity
+description: |
+   This artifact list the details of browser downloads which not exist in the browser history (Cleared intentionnaly).
+
+# Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
+type: CLIENT
+
+parameters:
+   - name: FirstParameter
+     default: Default Value of first parameter
+
+sources:
+  - precondition:
+      SELECT OS From info() where OS = 'windows' OR OS = 'linux' OR OS = 'darwin'
+
+    query: |
+      LET AllHistory <= SELECT visited_url FROM Artifact.Windows.Applications.Chrome.History()
+      LET BrowserHistory(record) = SELECT visited_url FROM AllHistory WHERE visited_url =~ record LIMIT 1 
+
+      SELECT *
+      FROM foreach(
+      row={
+        SELECT *, regex_replace(re="\\s", replace="", source=HostUrl) AS URL
+        FROM Artifact.Windows.Analysis.EvidenceOfDownload()
+      },
+      query={
+        SELECT BrowserHistory(record=URL).visited_url AS DownloadHistory,
+           DownloadedFilePath,
+           Mtime,
+           FileHash,
+           ZoneId,
+           HostUrl, 
+           ReferrerUrl
+        FROM scope() WHERE NOT DownloadHistory
+      })
+

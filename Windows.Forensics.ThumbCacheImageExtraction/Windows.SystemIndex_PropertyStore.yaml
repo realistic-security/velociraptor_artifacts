@@ -1,0 +1,52 @@
+name: Windows.SystemIndex_PropertyStore
+
+author: mhammed.seddaoui@realistic-security.com
+description: |
+   This is an artifact retrieve SystemIndex_PropertyStore Table from windows.edb inspired from SQLiteHunter artifact 
+
+# Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
+type: CLIENT
+
+sources:
+
+- query: |
+
+    LET X = scope()
+    
+    LET FormatTime(T) = timestamp(winfiletime=parse_binary(
+       filename=T, accessor="data", struct="uint64"))
+    
+    LET FormatSize(T) = parse_binary(
+       filename=T, accessor="data", struct="uint64")
+    
+    -- The PropertyStore columns look like
+    -- <random>-ProperName so we strip the
+    -- random part off to display it properly.
+    
+    LET FilterDict(Dict) = to_dict(item={
+      SELECT split(sep_string="-", string=_key)[1] || _key AS _key, _value
+      FROM items(item=Dict)
+    })
+    
+    LET py <= starl(code='''
+    def reverse(x):
+        x=x[2:]
+        a=""
+        for i in range(len(x),0,-2):
+            a+=x[i-2:i]
+        return a
+    ''')
+    
+    SELECT
+       py.reverse(x=str(str=X.System_ThumbnailCacheId)) AS System_ThumbnailCacheId
+    FROM foreach(row={
+       SELECT *, FilterDict(Dict=_value) AS _value
+       FROM items(item={
+         SELECT * FROM parse_ese(file="C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows\\Windows.edb", table="SystemIndex_PropertyStore")
+      })
+    }, column="_value")
+    
+
+
+
+
