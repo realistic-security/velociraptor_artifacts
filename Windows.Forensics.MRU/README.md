@@ -1,0 +1,3 @@
+# Windows.Forensics.MRU
+
+ This artifact is an augmentation for `Windows.Timeline.Registry.RunMRU` where the last does not useless on all case here where we use an This artifact utilizes RECmd from Eric Zimmerman's Tools to analyze User Configuration and Activity, focusing on Most Recently Used (MRU) items. Specifically, it extracts information from the output files LastVisitedPidlMRU__NTUSER.DAT.csv and OpenSavePidlMRU__NTUSER.DAT.csv.
