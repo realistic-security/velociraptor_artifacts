@@ -1,14 +1,19 @@
 name: Windows.Forensics.Browser.Clear.Downloads_History
 author: GUELMAOUI Mohamed Amine @ RealisticSecurity
 description: |
-   This artifact list the details of browser downloads which not exist in the browser history (Cleared intentionnaly).
 
+  This Artifact is designed to uncover intentionally deleted browser downloads, providing detailed insights into files deliberately removed from the browser history.
+  
+  - It starts by retrieving all entries from the browser history.
+
+  - A function is then defined to sift through the browser history for a given record, looking for a match.
+
+  - The tool proceeds to analyze the evidence of downloads, considering details like the downloaded file path, modification time, file hash, zone ID, host URL, and referrer URL.
+
+  - The selected scope excludes downloads that no longer appear in the browser history, highlighting intentionally cleared entries.
+  
 # Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
 type: CLIENT
-
-parameters:
-   - name: FirstParameter
-     default: Default Value of first parameter
 
 sources:
   - precondition:

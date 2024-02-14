@@ -3,10 +3,24 @@ author: mhammed.seddaoui@realistic-security.com
 
 description: |
 
-    This artifact involves using RECmd from Eric Zimmerman's Tools to analyze User Configuration and Activity
-    particularly the Most Recently Used (MRU) items. Specifically, we extract information from 
-    the LastVisitedPidlMRU__NTUSER.DAT.csv and OpenSavePidlMRU__NTUSER.DAT.csv output files.
+    This artifact utilizes RECmd from Eric Zimmerman's Tools to analyze User Configuration and Activity, specifically focusing on Most Recently Used (MRU) items. The information is extracted from the LastVisitedPidlMRU__NTUSER.DAT.csv and OpenSavePidlMRU__NTUSER.DAT.csv output files.
+
     
+    - It fetches the RECmd tool, available locally.
+
+    - A temporary directory is created to store the extracted files.
+
+    - NTUSER.DAT files are listed for each user on the client.
+
+    - Sequential queries are executed for each user to extract CSV files containing their activities and configurations using RECmd.
+
+    - The tool extracts information about the executable, absolute path, timestamp, and details of the binary that ran the opened file.
+
+    - CSV files containing user activities and configurations are filtered to include only the 'LastVisitedPidlMRU__NTUSER.DAT.csv' and 'OpenSavePidlMRU__NTUSER.DAT.csv' files.
+
+    - The final output includes details such as the executable, absolute path, timestamp, and additional information from the selected CSV files.
+
+
 # Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
 type: CLIENT
 

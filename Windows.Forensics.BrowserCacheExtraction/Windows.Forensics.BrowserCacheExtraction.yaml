@@ -1,9 +1,16 @@
 name: Windows.Forensics.BrowserCacheExtraction
 author: abderrahim.tasfaout@realistic-security.com
 description: |
-    This artificat will extract Chrome/Edge/Brave browsers Cache from windows  cache files.
-    
-    The extraction is in client side.
+    Extract Chrome, Edge, and Brave browser caches from Windows cache files.
+
+    - It fetches the "Chrome Cache Viewer" tool.
+
+    - The artifact iterates through browser caches for each user.
+
+    - For each cache, it extracts browser caches using the Chrome Cache Viewer tool.
+
+    - The results, including the username, browser type, and cache details, are parsed and collected.
+
 
 
 type: CLIENT

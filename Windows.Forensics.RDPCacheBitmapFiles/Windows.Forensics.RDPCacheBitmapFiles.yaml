@@ -3,7 +3,23 @@ name: Windows.Forensics.RDPCachBitmapFiles
 author: mhammed.seddaoui@realistic-security.com
 
 description: |
-   This is a customized artifact to extract bitmap files from RDP cache files
+    This customized artifact is designed to extract bitmap files from RDP cache files using the bmctools utility.
+
+   - It fetches the bmctools utility, available locally.
+
+    - A temporary directory (TempDir) is created for storing extracted files, and it is cleared after each user operation.
+
+    - Cached bin files are retrieved for each user on the client.
+
+    - A sequence of queries is executed for each user 
+
+        1. The artifact extracts bitmap files from the cache bin files using bmctools (exe version) and saves them in TempDir.
+
+        2. TempDir is compressed and named after the username, then uploaded.
+
+        3. The content of TempDir is deleted to prepare for the next username operation.
+
+    - The final output includes compressed zip files containing extracted bitmap files for each user on each client.
 
 # Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
 type: CLIENT

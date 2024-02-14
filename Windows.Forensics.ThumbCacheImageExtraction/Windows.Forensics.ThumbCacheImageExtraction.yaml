@@ -1,11 +1,18 @@
 name: Windows.Forensics.ThumbCacheImageExtraction
 author: abderrahim.tasfaout@realistic-security.com
 description: |
-    This artificat will extract Cached images from windows thumbache files.
-    
-    The extraction is in client side.
-    
-    The resutl will be multiple zip files for each user for each client.
+    Extract cached images from Windows thumbcache files. The results will generate multiple zip files for each user on each client.
+
+    - It fetches the "Thumbcache Viewer" tool.
+
+    - Existing user profiles with non-zero-size thumbcache files are identified.
+
+    - For each user, the artifact extracts thumbcaches using the Thumbcache Viewer tool, placing them in a temporary directory named ImagesTempDir.
+
+    - Delet BMP files that exist on Windows.edb using `Windows.Forensics.SystemIndex_PropertyStore`
+
+    - The artifact compresses the contents of the temporary directory into a zip file named after the user.
+
 
     
 
@@ -55,7 +62,7 @@ sources:
             },
             b={
                 SELECT rm(filename=ImagesTempDir+"\\"+System_ThumbnailCacheId+"*.bmp") 
-                FROM Artifact.RS.Windows.SystemIndex_PropertyStore()
+                FROM Artifact.Windows.Forensics.SystemIndex_PropertyStore()
             },
             c={
                 SELECT upload(file=ImagesTempDir+"\\"+username+".zip") FROM execve(argv=["powershell.exe","-c","Compress-Archive","-Path",ImagesTempDir,"-DestinationPath",ImagesTempDir+"\\"+username,"-CompressionLevel","Fastest"])

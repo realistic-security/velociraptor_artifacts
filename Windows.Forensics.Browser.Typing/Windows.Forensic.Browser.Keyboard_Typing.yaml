@@ -1,14 +1,19 @@
 name: Windows.Forensic.Browser.Keyboard_Typing
 description: |
-  As an incident responder I should be able to detect browser keyboard typing with Velociraptor.
-  
-  Browser included: Chrome, Opera, Edge, Brave, Firefox
 
-  NOTE: Some research has shown that older browsers may not have this
-  table, then you should be treating it as you would in a traditional
-  investigation, this changes is aimed at taking advantage of the
-  newer tables to reduce false postitives.
+    This Velociraptor tool assists incident responders in identifying keyboard typing activities in browsers like Chrome, Opera, Edge, Brave, and Firefox. It analyzes browser data to determine when and what users have typed.
 
+    - It checks the presence of the operating system being Windows as a precondition.
+
+    - It gathers information from the browsing history of various browsers, including Chrome, Opera, Edge, Brave, and Firefox.
+
+    - For Chrome, Opera, Edge, and Brave browsers, it retrieves browsing history files from user directories.
+
+    - For Firefox, it collects information from the places.sqlite file in user profiles.
+
+    - The artifact uses predefined SQL queries tailored for each browser to extract relevant details such as search terms, visited URLs, visit count, and timestamps.
+
+    - The results are combined into a single result table, providing a comprehensive overview of keyboard typing activities across different browsers for further analysis.
 
 
 author: GUELMAOUI Mohamed Amine @ Realistic Security

@@ -1,8 +1,16 @@
-name: Windows.SystemIndex_PropertyStore
+name: Windows.Forensics.SystemIndex_PropertyStore
 
 author: mhammed.seddaoui@realistic-security.com
 description: |
-   This is an artifact retrieve SystemIndex_PropertyStore Table from windows.edb inspired from SQLiteHunter artifact 
+    This artifact retrieves the SystemIndex_PropertyStore table from the Windows.edb database, inspired by the SQLiteHunter artifact.
+
+   - It utilizes the Extended Storage Engine (ESE) parser to parse the SystemIndex_PropertyStore table from the Windows.edb database.
+
+    - Custom functions, such as FormatTime and FormatSize, are defined to handle timestamp and size formatting.
+
+    - The PropertyStore columns typically have a <random>-ProperName format. The artifact strips the random part off for proper display.
+
+    - The output includes information from the SystemIndex_PropertyStore table, with the System_ThumbnailCacheId reversed and formatted for better presentation.
 
 # Can be CLIENT, CLIENT_EVENT, SERVER, SERVER_EVENT or NOTEBOOK
 type: CLIENT

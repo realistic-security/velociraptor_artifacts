@@ -1,9 +1,16 @@
 name: Windows.Forensics.MozilaCacheExtraction
 author: abderrahim.tasfaout@realistic-security.com
 description: |
-    This artificat will extract mozila browser Cache from windows  cache files.
-    
-    The extraction is in client side.
+    Extract Mozilla browser caches from Windows cache files.
+
+    - It fetches the "Mozilla Cache Viewer" tool.
+
+    - The artifact iterates through browser caches for each user.
+
+    - For each cache, it extracts browser caches using the Mozila Cache Viewer tool.
+
+    - The results, including the username, browser type, and cache details, are parsed and collected.
+
 
 
 type: CLIENT
