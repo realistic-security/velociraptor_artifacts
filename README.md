@@ -3,7 +3,7 @@
 ![Realistic Security](./docs/images/stand-logo-400x160.png)
 
 
-Welcome to  velociraptor_artifacts repository! We made these tools to help with incidents. This collection is a set of carefully developed artifacts designed to improve digital forensics and incident response procedures by extracting important evidence data. Our team recognized the need for specific artifacts that does not exist on[Velociraptor tool](https://github.com/Velocidex/velociraptor) and we developed this collection,  It's our way of trying to fill a gap and make things a bit easier for everyone.
+Welcome to  velociraptor_artifacts repository! We made these tools to help with incidents. This collection is a set of carefully developed artifacts designed to improve digital forensics and incident response procedures by extracting important evidence data. Our team recognized the need for specific artifacts that does not exist on [Velociraptor tool](https://github.com/Velocidex/velociraptor) and we developed this collection,  It's our way of trying to fill a gap and make things a bit easier for everyone.
 
 ## Features
 
@@ -12,27 +12,27 @@ Welcome to  velociraptor_artifacts repository! We made these tools to help with
 - **Metadata:** 
 	
   - **name:** Name of the artifact example `Windows.Forensics.MRU` 
-	- **author:** Author's name we use email address 
-	- **description:** Brief description of the artifact and its significance in incident response.
+  - **author:** Author's name we use email address 
+  - **description:** Brief description of the artifact and its significance in incident response.
 
 
 ## Changes Log
 
-- [Windows.Forensics.Browser.Clear.Downloads_History](./Windows.Forensics.Browser.Clear.Downloads_History/README.md) 
+- [Windows.Forensics.Browser.Clear.Downloads_History](./Windows.Forensics.Browser.Clear.Downloads_History/) 
 
-- [Windows.Forensics.Browser.Typing](./Windows.Forensics.Browser.Typing/README.md)
+- [Windows.Forensics.Browser.Typing](./Windows.Forensics.Browser.Typing/)
 
-- [Windows.Forensics.BrowserCacheExtraction](./Windows.Forensics.BrowserCacheExtraction/README.md)
+- [Windows.Forensics.BrowserCacheExtraction](./Windows.Forensics.BrowserCacheExtraction/)
 
-- [Windows.Forensics.Clipboard](./Windows.Forensics.Clipboard/README.md)
+- [Windows.Forensics.Clipboard](./Windows.Forensics.Clipboard/)
 
-- [Windows.Forensics.MozilaCacheExtraction](./Windows.Forensics.MozilaCacheExtraction/README.md):  
+- [Windows.Forensics.MozilaCacheExtraction](./Windows.Forensics.MozilaCacheExtraction/):  
 
-- [Windows.Forensics.MRU](./Windows.Forensics.MRU/README.md)
+- [Windows.Forensics.MRU](./Windows.Forensics.MRU/)
 
-- [Windows.Forensics.RDPCacheBitmapFiles](./Windows.Forensics.RDPCacheBitmapFiles/README.md)
+- [Windows.Forensics.RDPCacheBitmapFiles](./Windows.Forensics.RDPCacheBitmapFiles/)
 
-- [Windows.Forensics.ThumbCacheImageExtraction](./Windows.Forensics.ThumbCacheImageExtraction/README.md)
+- [Windows.Forensics.ThumbCacheImageExtraction](./Windows.Forensics.ThumbCacheImageExtraction/)
 
 
 ## Usage
