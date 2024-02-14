@@ -18,21 +18,21 @@ Welcome to  velociraptor_artifacts repository! We made these tools to help with
 
 ## Changes Log
 
-- [Windows.Forensics.Browser.Clear.Downloads_History](./Windows.Forensics.Browser.Clear.Downloads_History/README.md) 
+- [Windows.Forensics.Browser.Clear.Downloads_History](./Windows.Forensics.Browser.Clear.Downloads_History/) 
 
-- [Windows.Forensics.Browser.Typing](./Windows.Forensics.Browser.Typing/README.md)
+- [Windows.Forensics.Browser.Typing](./Windows.Forensics.Browser.Typing/)
 
-- [Windows.Forensics.BrowserCacheExtraction](./Windows.Forensics.BrowserCacheExtraction/README.md)
+- [Windows.Forensics.BrowserCacheExtraction](./Windows.Forensics.BrowserCacheExtraction/)
 
-- [Windows.Forensics.Clipboard](./Windows.Forensics.Clipboard/README.md)
+- [Windows.Forensics.Clipboard](./Windows.Forensics.Clipboard/)
 
-- [Windows.Forensics.MozilaCacheExtraction](./Windows.Forensics.MozilaCacheExtraction/README.md):  
+- [Windows.Forensics.MozilaCacheExtraction](./Windows.Forensics.MozilaCacheExtraction/):  
 
-- [Windows.Forensics.MRU](./Windows.Forensics.MRU/README.md)
+- [Windows.Forensics.MRU](./Windows.Forensics.MRU/)
 
-- [Windows.Forensics.RDPCacheBitmapFiles](./Windows.Forensics.RDPCacheBitmapFiles/README.md)
+- [Windows.Forensics.RDPCacheBitmapFiles](./Windows.Forensics.RDPCacheBitmapFiles/)
 
-- [Windows.Forensics.ThumbCacheImageExtraction](./Windows.Forensics.ThumbCacheImageExtraction/README.md)
+- [Windows.Forensics.ThumbCacheImageExtraction](./Windows.Forensics.ThumbCacheImageExtraction/)
 
 
 ## Usage
