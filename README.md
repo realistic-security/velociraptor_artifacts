@@ -12,8 +12,8 @@ Welcome to  velociraptor_artifacts repository! We made these tools to help with
 - **Metadata:** 
 	
   - **name:** Name of the artifact example `Windows.Forensics.MRU` 
-	- **author:** Author's name we use email address 
-	- **description:** Brief description of the artifact and its significance in incident response.
+  - **author:** Author's name we use email address 
+  - **description:** Brief description of the artifact and its significance in incident response.
 
 
 ## Changes Log
