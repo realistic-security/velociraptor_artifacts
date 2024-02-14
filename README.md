@@ -3,7 +3,7 @@
 ![Realistic Security](./docs/images/stand-logo-400x160.png)
 
 
-Welcome to  velociraptor_artifacts repository! We made these tools to help with incidents. This collection is a set of carefully developed artifacts designed to improve digital forensics and incident response procedures by extracting important evidence data. Our team recognized the need for specific artifacts that does not exist on[Velociraptor tool](https://github.com/Velocidex/velociraptor) and we developed this collection,  It's our way of trying to fill a gap and make things a bit easier for everyone.
+Welcome to  velociraptor_artifacts repository! We made these tools to help with incidents. This collection is a set of carefully developed artifacts designed to improve digital forensics and incident response procedures by extracting important evidence data. Our team recognized the need for specific artifacts that does not exist on [Velociraptor tool](https://github.com/Velocidex/velociraptor) and we developed this collection,  It's our way of trying to fill a gap and make things a bit easier for everyone.
 
 ## Features
 
